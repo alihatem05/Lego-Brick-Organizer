@@ -32,10 +32,7 @@ def load_trained_models():
     model_files = [
         'decision_tree.pkl',
         'random_forest.pkl',
-        'xgboost.pkl',
-        'knn.pkl',
-        'svm.pkl',
-        'ann.pkl'
+        'knn.pkl'
     ]
     
     for model_file in model_files:
@@ -51,11 +48,8 @@ def load_trained_models():
     classes_path = os.path.join(MODEL_OUT_DIR, "class_names.pkl")
     class_names = joblib.load(classes_path) if os.path.exists(classes_path) else None
     
-    selector_path = os.path.join(MODEL_OUT_DIR, "feature_selector.pkl")
-    feature_selector = joblib.load(selector_path) if os.path.exists(selector_path) else None
-    
     print(f"\nLoaded {len(models)} models")
-    return models, scaler, class_names, feature_selector
+    return models, scaler, class_names
 
 def evaluate_classifier(model, X_test, y_test, class_names, model_name):
     y_pred = model.predict(X_test)

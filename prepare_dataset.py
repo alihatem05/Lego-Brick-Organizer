@@ -1,4 +1,47 @@
 import os
+from configs import DATASET_DIR
+
+def check_dataset():
+    if not os.path.exists(DATASET_DIR):
+        return False
+    
+    class_folders = [d for d in os.listdir(DATASET_DIR) 
+                    if os.path.isdir(os.path.join(DATASET_DIR, d))]
+    
+    if len(class_folders) == 0:
+        return False
+    
+    total_images = 0
+    for class_folder in class_folders:
+        class_path = os.path.join(DATASET_DIR, class_folder)
+        images = [f for f in os.listdir(class_path) 
+                 if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
+        total_images += len(images)
+    
+    return total_images > 0
+
+def print_instructions():
+    print("="*70)
+    print("DATASET PREPARATION")
+    print("="*70)
+    print(f"\nPlease create a '{DATASET_DIR}' folder with the following structure:\n")
+    print(f"{DATASET_DIR}/")
+    print("  ├── class1/")
+    print("      ├── image1.jpg")
+    print("      ├── image2.jpg")
+    print("      └── ...")
+    print("  ├── class2/")
+    print("      ├── image1.jpg")
+    print("      └── ...")
+    print("  └── ...\n")
+    print("Each subfolder should contain images of one LEGO brick type.")
+    print("\nOr run 'python create_sample_dataset.py' to create sample data.")
+
+if __name__ == '__main__':
+    if check_dataset():
+        print(f"✓ Dataset found in '{DATASET_DIR}/'")
+    else:
+        print_instructions()
 import sys
 from pathlib import Path
 import cv2
