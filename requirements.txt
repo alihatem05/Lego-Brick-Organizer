@@ -1,0 +1,16 @@
+numpy
+pandas
+opencv-python
+Pillow
+scikit-learn
+scikit-image
+matplotlib
+seaborn
+joblib
+xgboost
+torch
+torchvision
+albumentations
+ultralytics
+streamlit
+streamlit-webrtc

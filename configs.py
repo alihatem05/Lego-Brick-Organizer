@@ -1,0 +1,11 @@
+RAW_DATA_DIR = "data/raw"
+CROPS_DIR = "data/crops"
+CLASSES_FILE = "data/classes.txt"
+TEST_SIZE = 0.15
+VAL_SIZE = 0.15
+RANDOM_STATE = 42
+IMAGE_SIZE = (128, 128)
+BATCH_SIZE = 32
+NUM_EPOCHS = 10
+DEVICE = "cuda" if __import__("torch").cuda.is_available() else "cpu"
+MODEL_OUT_DIR = "models"
