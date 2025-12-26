@@ -3,7 +3,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-from configs import CROPS_DIR, IMAGE_SIZE
+from configs import IMAGE_SIZE
 
 def ensure_dir(path: str) -> None:
     Path(path).mkdir(parents=True, exist_ok=True)

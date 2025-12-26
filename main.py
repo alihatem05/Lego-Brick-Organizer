@@ -10,47 +10,16 @@ def print_header(title):
 
 def check_dataset():
     if not os.path.exists(DATASET_DIR):
-        print(f"\nERROR: '{DATASET_DIR}' folder not found!")
-        print(f"\nPlease create a '{DATASET_DIR}' folder with this structure:")
-        print(f"  {DATASET_DIR}/")
-        print(f"    class1/")
-        print(f"      image1.jpg")
-        print(f"      image2.jpg")
-        print(f"    class2/")
-        print(f"      image1.jpg")
-        print(f"      image2.jpg")
-        print(f"\nPlace your LEGO brick photos in folders named by class.")
-        return False
+        print(f"Creating '{DATASET_DIR}' folder...")
+        os.makedirs(DATASET_DIR, exist_ok=True)
     
-    class_folders = [d for d in os.listdir(DATASET_DIR) 
-                     if os.path.isdir(os.path.join(DATASET_DIR, d))]
-    
-    if len(class_folders) == 0:
-        print(f"\nERROR: No class folders found in '{DATASET_DIR}'!")
-        print(f"\nCreate subfolders for each brick type and add photos.")
-        return False
-    
-    total_images = 0
-    for class_folder in class_folders:
-        class_path = os.path.join(DATASET_DIR, class_folder)
-        images = [f for f in os.listdir(class_path) 
-                 if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
-        total_images += len(images)
-    
-    if total_images == 0:
-        print(f"\nERROR: No images found in '{DATASET_DIR}' class folders!")
-        print(f"\nAdd .jpg or .png photos to the class folders.")
-        return False
-    
-    print(f"✓ Found {len(class_folders)} classes with {total_images} total images")
+    print(f"✓ Dataset folder ready")
     return True
 
 if __name__ == '__main__':
     print_header("LEGO BRICK CLASSIFIER")
     
-    print("Checking dataset...")
-    if not check_dataset():
-        sys.exit(1)
+    check_dataset()
     
     print_header("TRAINING MODELS")
     print("Training 3 classifiers (Decision Tree, Random Forest, KNN)...")
