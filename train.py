@@ -1,4 +1,3 @@
-
 import os
 import numpy as np
 import pandas as pd
@@ -87,21 +86,34 @@ def split_dataset(X, y, test_size=TEST_SIZE, val_size=VAL_SIZE, random_state=RAN
     return X_train, X_val, X_test, y_train, y_val, y_test
 
 def get_classifiers():
+    """Get improved classifiers with better parameters"""
     classifiers = {}
     
+    # Decision Tree with limited depth to reduce overfitting
     classifiers['Decision Tree'] = DecisionTreeClassifier(
-        max_depth=10,
+        max_depth=15,  # Increased from 10
+        min_samples_split=10,  # Prevent overfitting
+        min_samples_leaf=5,
         random_state=RANDOM_STATE
     )
     
+    # Random Forest with more trees and regularization
     classifiers['Random Forest'] = RandomForestClassifier(
-        n_estimators=50,
-        max_depth=10,
-        random_state=RANDOM_STATE
+        n_estimators=100,  # Increased from 50
+        max_depth=15,  # Increased from 10
+        min_samples_split=10,
+        min_samples_leaf=4,
+        max_features='sqrt',  # Use sqrt of features
+        random_state=RANDOM_STATE,
+        n_jobs=-1  # Use all CPU cores
     )
     
+    # KNN with optimized parameters
     classifiers['KNN'] = KNeighborsClassifier(
-        n_neighbors=5
+        n_neighbors=7,  # Increased from 5
+        weights='distance',  # Weight by distance
+        metric='manhattan',  # Try manhattan distance
+        n_jobs=-1
     )
     
     return classifiers
@@ -143,6 +155,7 @@ def train_and_evaluate_classifiers(X_train, X_val, y_train, y_val, class_names):
             
             print(f"Training Accuracy: {train_accuracy*100:.2f}%")
             print(f"Validation Accuracy: {val_accuracy*100:.2f}%")
+            print(f"Overfitting gap: {(train_accuracy - val_accuracy)*100:.2f}%")
             print(f"Training Time: {training_time:.2f} seconds")
             
         except Exception as e:
@@ -152,12 +165,13 @@ def train_and_evaluate_classifiers(X_train, X_val, y_train, y_val, class_names):
     print("\n" + "="*70)
     print("TRAINING SUMMARY")
     print("="*70)
-    print(f"{'Classifier':<20} {'Train Acc':<12} {'Val Acc':<12} {'Time (s)':<10}")
+    print(f"{'Classifier':<20} {'Train Acc':<12} {'Val Acc':<12} {'Gap':<10} {'Time (s)':<10}")
     print("-"*70)
     
     for name, res in results.items():
+        gap = (res['train_accuracy'] - res['val_accuracy']) * 100
         print(f"{name:<20} {res['train_accuracy']*100:>10.2f}% "
-              f"{res['val_accuracy']*100:>10.2f}% {res['training_time']:>10.2f}")
+              f"{res['val_accuracy']*100:>10.2f}% {gap:>8.2f}% {res['training_time']:>10.2f}")
     
     return trained_models, results
 
