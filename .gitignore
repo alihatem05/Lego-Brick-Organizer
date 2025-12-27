@@ -3,3 +3,4 @@ dataset_original/
 .vscode/
 __pycache__/
 venv/
+*.pkl
