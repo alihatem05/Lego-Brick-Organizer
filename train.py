@@ -14,10 +14,12 @@ from sklearn.metrics import accuracy_score, classification_report
 import warnings
 warnings.filterwarnings('ignore')
 
-from configs import DATASET_DIR, TEST_SIZE, VAL_SIZE, RANDOM_STATE, MODEL_OUT_DIR, IMAGE_SIZE
+from configs import DATASET_DIR, TEST_SIZE, VAL_SIZE, RANDOM_STATE, MODEL_OUT_DIR, IMAGE_SIZE, USE_AUGMENTATION, AUGMENTATIONS_PER_IMAGE
 from utils import ensure_dir, list_image_files, read_image_rgb
 from features import extract_all_features, standardize_features
 from preprocessing import resize, normalize
+from augmentation import augment_image
+from ensemble import create_ensemble, save_ensemble
 
 def load_dataset(dataset_dir=DATASET_DIR):
     print("\n" + "="*70)
@@ -32,6 +34,9 @@ def load_dataset(dataset_dir=DATASET_DIR):
     
     print(f"Found {len(class_folders)} classes: {class_folders}")
     
+    if USE_AUGMENTATION:
+        print(f"\n⚡ Data Augmentation ENABLED: {AUGMENTATIONS_PER_IMAGE} augmentations per image")
+    
     X = []
     y = []
     
@@ -40,6 +45,9 @@ def load_dataset(dataset_dir=DATASET_DIR):
         image_files = list_image_files(class_path)
         
         print(f"\nProcessing class '{class_name}': {len(image_files)} images")
+        
+        original_count = 0
+        augmented_count = 0
         
         for img_path in image_files:
             try:
@@ -51,13 +59,27 @@ def load_dataset(dataset_dir=DATASET_DIR):
                 img = normalize(img)
                 img = (img * 255).astype(np.uint8)
                 
+                # Extract features from original image
                 features = extract_all_features(img)
                 X.append(features)
                 y.append(class_idx)
+                original_count += 1
+                
+                # Apply data augmentation if enabled
+                if USE_AUGMENTATION:
+                    augmented_images = augment_image(img, num_augmentations=AUGMENTATIONS_PER_IMAGE)
+                    for aug_img in augmented_images[1:]:  # Skip first (original)
+                        aug_features = extract_all_features(aug_img)
+                        X.append(aug_features)
+                        y.append(class_idx)
+                        augmented_count += 1
                 
             except Exception as e:
                 print(f"Error processing {img_path}: {e}")
                 continue
+        
+        if USE_AUGMENTATION:
+            print(f"  → Original: {original_count}, Augmented: {augmented_count}, Total: {original_count + augmented_count}")
     
     X = np.array(X)
     y = np.array(y)
@@ -305,6 +327,30 @@ def main():
     models, results = train_and_evaluate_classifiers(
         X_train_scaled, X_val_scaled, y_train, y_val, class_names
     )
+    
+    # Create ensemble model from best performing models
+    print("\n" + "="*70)
+    print("CREATING ENSEMBLE MODEL")
+    print("="*70)
+    
+    # Select top models based on validation accuracy
+    sorted_models = sorted(results.items(), key=lambda x: x[1]['val_accuracy'], reverse=True)
+    top_model_names = [name for name, _ in sorted_models[:3]]  # Top 3 models
+    
+    print(f"Selecting top 3 models for ensemble:")
+    for i, name in enumerate(top_model_names, 1):
+        val_acc = results[name]['val_accuracy']
+        print(f"  {i}. {name}: {val_acc*100:.2f}%")
+    
+    ensemble_models = {name: models[name] for name in top_model_names}
+    ensemble = create_ensemble(ensemble_models, voting='soft')
+    
+    # Evaluate ensemble on validation set
+    ensemble_val_acc = ensemble.score(X_val_scaled, y_val)
+    print(f"\nEnsemble Validation Accuracy: {ensemble_val_acc*100:.2f}%")
+    
+    # Add ensemble to models
+    models['Ensemble (Top 3)'] = ensemble
     
     save_models(models, scaler, class_names)
     
