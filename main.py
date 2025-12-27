@@ -11,7 +11,7 @@ def print_header(title):
 def check_dataset():
     """Check if dataset exists and has proper structure"""
     if not os.path.exists(DATASET_DIR):
-        print(f"❌ Error: Dataset folder '{DATASET_DIR}' not found!")
+        print(f"Error: Dataset folder '{DATASET_DIR}' not found!")
         print(f"\nPlease create the folder structure:")
         print(f"{DATASET_DIR}/")
         print(f"  ├── class1/")
@@ -27,7 +27,7 @@ def check_dataset():
                     if os.path.isdir(os.path.join(DATASET_DIR, d))]
     
     if len(class_folders) == 0:
-        print(f"❌ Error: No class folders found in '{DATASET_DIR}'!")
+        print(f"Error: No class folders found in '{DATASET_DIR}'!")
         print(f"\nEach class should be in a separate subfolder.")
         return False
     
@@ -81,8 +81,12 @@ def main():
     
     # Training
     print_header("TRAINING MODELS")
-    print("Training 3 classifiers (Decision Tree, Random Forest, KNN)...")
-    print("This may take a few minutes...\n")
+    print("Training multiple classifiers with hyperparameter tuning:")
+    print("- Decision Tree")
+    print("- Random Forest (with tuning)")
+    print("- KNN")
+    print("- SVM (with tuning)")
+    print("\nThis may take several minutes...\n")
     
     try:
         import train
@@ -120,7 +124,10 @@ def main():
     print(f"\nTrained models saved to: {MODEL_OUT_DIR}/")
     print(f"  - decision_tree.pkl")
     print(f"  - random_forest.pkl")
+    print(f"  - random_forest_(tuned).pkl")
     print(f"  - knn.pkl")
+    print(f"  - svm.pkl")
+    print(f"  - svm_(tuned).pkl")
     print(f"  - scaler.pkl")
     print(f"  - class_names.pkl")
     print("\n" + "="*70)

@@ -5,10 +5,11 @@ from pathlib import Path
 import cv2
 import joblib
 import time
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score, classification_report
 import warnings
 warnings.filterwarnings('ignore')
@@ -97,12 +98,12 @@ def get_classifiers():
         random_state=RANDOM_STATE
     )
     
-    # Random Forest with more trees and regularization
+    # Random Forest with hyperparameter tuning
     classifiers['Random Forest'] = RandomForestClassifier(
-        n_estimators=100,  # Increased from 50
-        max_depth=15,  # Increased from 10
-        min_samples_split=10,
-        min_samples_leaf=4,
+        n_estimators=200,  # More trees for better performance
+        max_depth=20,  # Allow deeper trees
+        min_samples_split=5,  # Allow smaller splits
+        min_samples_leaf=2,  # Smaller leaf size
         max_features='sqrt',  # Use sqrt of features
         random_state=RANDOM_STATE,
         n_jobs=-1  # Use all CPU cores
@@ -116,7 +117,88 @@ def get_classifiers():
         n_jobs=-1
     )
     
+    # SVM with RBF kernel
+    classifiers['SVM'] = SVC(
+        kernel='rbf',
+        C=10.0,
+        gamma='scale',
+        random_state=RANDOM_STATE,
+        probability=True  # Enable probability estimates
+    )
+    
     return classifiers
+
+def tune_random_forest(X_train, y_train):
+    """Perform hyperparameter tuning for Random Forest"""
+    print("\n" + "="*70)
+    print("TUNING RANDOM FOREST HYPERPARAMETERS")
+    print("="*70)
+    
+    param_grid = {
+        'n_estimators': [150, 200, 250, 300],
+        'max_depth': [20, 25, 30, None],
+        'min_samples_leaf': [1, 2, 3],
+        'min_samples_split': [2, 5, 8]
+    }
+    
+    rf = RandomForestClassifier(
+        random_state=RANDOM_STATE,
+        n_jobs=-1,
+        max_features='sqrt'
+    )
+    
+    print("Searching for best parameters...")
+    print(f"Parameter grid: {param_grid}")
+    
+    grid_search = GridSearchCV(
+        rf, param_grid, 
+        cv=3,  # 3-fold cross-validation
+        scoring='accuracy',
+        n_jobs=-1,
+        verbose=1
+    )
+    
+    grid_search.fit(X_train, y_train)
+    
+    print(f"\nBest parameters: {grid_search.best_params_}")
+    print(f"Best cross-validation score: {grid_search.best_score_*100:.2f}%")
+    
+    return grid_search.best_estimator_
+
+def tune_svm(X_train, y_train):
+    """Perform hyperparameter tuning for SVM"""
+    print("\n" + "="*70)
+    print("TUNING SVM HYPERPARAMETERS")
+    print("="*70)
+    
+    param_grid = {
+        'C': [1, 10, 50, 100],
+        'gamma': ['scale', 'auto', 0.01, 0.1],
+        'kernel': ['rbf', 'poly']
+    }
+    
+    svm = SVC(
+        random_state=RANDOM_STATE,
+        probability=True
+    )
+    
+    print("Searching for best parameters...")
+    print(f"Parameter grid: {param_grid}")
+    
+    grid_search = GridSearchCV(
+        svm, param_grid, 
+        cv=3,  # 3-fold cross-validation
+        scoring='accuracy',
+        n_jobs=-1,
+        verbose=1
+    )
+    
+    grid_search.fit(X_train, y_train)
+    
+    print(f"\nBest parameters: {grid_search.best_params_}")
+    print(f"Best cross-validation score: {grid_search.best_score_*100:.2f}%")
+    
+    return grid_search.best_estimator_
 
 def train_and_evaluate_classifiers(X_train, X_val, y_train, y_val, class_names):
     print("\n" + "="*70)
@@ -126,6 +208,16 @@ def train_and_evaluate_classifiers(X_train, X_val, y_train, y_val, class_names):
     classifiers = get_classifiers()
     results = {}
     trained_models = {}
+    
+    # Tune Random Forest separately
+    print("\nPerforming hyperparameter tuning for Random Forest...")
+    tuned_rf = tune_random_forest(X_train, y_train)
+    classifiers['Random Forest (Tuned)'] = tuned_rf
+    
+    # Tune SVM separately
+    print("\nPerforming hyperparameter tuning for SVM...")
+    tuned_svm = tune_svm(X_train, y_train)
+    classifiers['SVM (Tuned)'] = tuned_svm
     
     for name, clf in classifiers.items():
         print(f"\n{'-'*70}")
