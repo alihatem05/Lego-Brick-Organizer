@@ -51,9 +51,8 @@ def main():
         sys.exit(1)
     
     print("\n" + "="*70)
-    print("Starting Enhanced Training (with feature selection & ensemble)")
+    print("Starting Enhanced Training")
     print("Expected accuracy: 92-93%")
-    print("Estimated time: 10-15 minutes")
     print("="*70)
     
     # Training
